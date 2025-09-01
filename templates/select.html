@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MessageBOX</title>
+</head>
+<body>
+
+  <h1>ようこそ</h1>
+  
+ 
+
+    {% for message in get_flashed_messages() %}
+        <p>{{ message }}</p>
+    {% endfor %}
+
+    
+    {% if current_user.is_authenticated %}
+        <p>{{ current_user.name }} さんこんにちは</p>
+    {% else %}
+        <p>ログインしていません</p>
+    {% endif %}
+
+    <h1>家賃一覧</h1>
+    <ul>
+        <li><a href="./select/s1_video_camera">ビデオカメラ</a></li>
+        <li><a href="./select/s2_speaker">スピーカ</a></li>
+        <li><a href="./select/s3_video_deck">ビデオデッキ</a></li>
+        <li><a href="./select/s4_tv">テレビ</a></li>
+        <li><a href="./select/s5_refrigerator">冷蔵庫</a></li>
+        <li><a href="./select/s6_laundry_machine">洗濯機</a></li>
+        <li><a href="./select/s7_microwave">電子レンジ</a></li>
+        <li><a href="./select/s8_rice_cooker">炊飯器</a></li>
+        <li><a href="./select/s9_hair_dryer">ドライヤー</a></li>
+    </ul>
+    
+</body>
+</html>
