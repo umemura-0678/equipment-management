@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MessageBOX</title>
+     <style>
+        .message {
+            color: red;
+        }
+         </style>
+</head>
+<body>
+
+  
+ 
+
+    
+    {% for message in get_flashed_messages() %}
+
+        <p class="message">{{ message }}</p>
+    {% endfor %}
+
+    
+    {% if current_user.is_authenticated %}
+        <p>{{ current_user.name }} さんこんにちは</p>
+    {% else %}
+        <p>ログインしていません</p>
+    {% endif %}
+
+    <ul>
+    <li><a href="/user_menu">ユーザ管理</a></li>
+    <li><a href="/item_menu">物品管理</a></li>
+    <li><a href="/mail_send">メール送信</a></li>
+    <li><a href="/logout">LOGOUTしてTOPに戻る</a></li>
+    </ul>
+
+    
+</body>
+</html>

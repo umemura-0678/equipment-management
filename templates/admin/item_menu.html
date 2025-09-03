@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOP page</title>
+    <title>MessageBOX</title>
 </head>
 <body>
 
-  <h1>ようこそ</h1>
-  <ul>
-    <li><a href="./login">ログイン</a></li>
-    <li><a href="./admin_login">管理画面</a></li>
-  </ul>
+  
+ 
 
     {% for message in get_flashed_messages() %}
         <p>{{ message }}</p>
     {% endfor %}
 
     
-    <!-- {% if current_user.is_authenticated %}
-        <p>{{ current_user.name }} さんこんにちは</p> -->
+    {% if current_user.is_authenticated %}
+        <p>{{ current_user.name }} さんこんにちは</p>
     {% else %}
         <p>ログインしていません</p>
     {% endif %}
 
-    
+     <ul>
+    <li><a href="/item_register">物品登録</a></li>
+    <li><a href="/item_delete">物品消去</a></li>
+    <li><a href="/admin_menu">戻る</a></li>
+  </ul>
 </body>
 </html>

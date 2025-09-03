@@ -17,7 +17,7 @@ def load_user(user_id):
 
 
 # ユーザー登録フォームの表示・登録処理
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/user_register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         # データの検証
@@ -37,9 +37,9 @@ def register():
             email=request.form["email"],
             password=generate_password_hash(request.form["password"]),
         )
-        return render_template("index.html")
+        return render_template("/admin/user_menu.html")
 
-    return render_template("register.html")
+    return render_template("/admin/user_register.html")
 
 
 # ログインフォームの表示・ログイン処理
@@ -69,6 +69,9 @@ def login():
 def logout():
     logout_user()
     flash("ログアウトしました！")
+
+    # time.sleep(3)
+
     return redirect("/")
 
 
@@ -78,6 +81,54 @@ def unregister():
     current_user.delete_instance()
     logout_user()
     return redirect("/")
+
+# 管理画面ログイン機能
+@app.route("/admin_login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        if not request.form["password"] :
+            flash("未入力の項目があります。")
+            return redirect(request.url)
+
+        # ここでユーザーを認証し、OKならログインする
+        user = User.select().where(User.name == "admin").first()
+        if user is not None and check_password_hash(user.password, request.form["password"]):
+            login_user(user)
+            flash(f"ようこそ！ {user.name} さん")
+            
+            return redirect("/admin_menu")
+
+        # NGならフラッシュメッセージを設定
+        flash("認証に失敗しました")
+
+    return render_template("/admin/admin_login.html")
+
+@app.route("/admin_menu")
+def admin_menu():
+    return render_template("/admin/admin_menu.html")
+# @app.route("/user_register")
+# def user_register():
+#     return render_template("/admin/user_register.html")
+@app.route("/user_delete")
+def user_delete():
+    return render_template("/admin/user_delete.html")
+@app.route("/item_register")
+def item_register():
+    return render_template("/admin/item_register.html")
+@app.route("/item_delete")
+def item_delete():
+    return render_template("/admin/item_delete.html")
+@app.route("/mail_send")
+def mail_send():
+    return render_template("/admin/mail_send.html")
+@app.route("/user_menu")
+def user_menu():
+    return render_template("/admin/user_menu.html")
+@app.route("/item_menu")
+def item_menu():
+    return render_template("/admin/item_menu.html")
+
+
 
 
 @app.route("/")
@@ -90,39 +141,43 @@ def select():
 
 @app.route("/select/s1_video_camera")
 def video_camera():
-    return render_template("/select_list/s1_video_camera.html")
+    return render_template("/select_item/s1_video_camera.html")
 
 @app.route("/select/s2_speaker")
 def speaker():
-    return render_template("/select_list/s2_speaker.html")
+    return render_template("/select_item/s2_speaker.html")
 
 @app.route("/select/s3_video_deck")
 def video_deck():
-    return render_template("/select_list/s3_video_deck.html")
+    return render_template("/select_item/s3_video_deck.html")
 
 @app.route("/select/s4_tv")
 def tv():
-    return render_template("/select_list/s4_tv.html")
+    return render_template("/select_item/s4_tv.html")
 
 @app.route("/select/s5_refrigerator")
 def refrigerator():
-    return render_template("/select_list/s5_refrigerator.html")
+    return render_template("/select_item/s5_refrigerator.html")
 
 @app.route("/select/s6_laundry_machine")
 def laundry_machine():
-    return render_template("/select_list/s6_laundry_machine.html")
+    return render_template("/select_item/s6_laundry_machine.html")
 
 @app.route("/select/s7_microwave")
 def microwave():
-    return render_template("/select_list/s7_microwave.html")
+    return render_template("/select_item/s7_microwave.html")
 
 @app.route("/select/s8_rice_cooker")
 def rice_cooker():
-    return render_template("/select_list/s8_rice_cooker.html")
+    return render_template("/select_item/s8_rice_cooker.html")
 
 @app.route("/select/s9_hair_dryer")
 def hair_dryer():
-    return render_template("/select_list/s9_hair_dryer.html")
+    return render_template("/select_item/s9_hair_dryer.html")
+
+@app.route("/select/s10_air_conditioner")
+def air_conditioner():
+    return render_template("/select_item/s10_air_conditioner.html")
 
 
 if __name__ == "__main__":
