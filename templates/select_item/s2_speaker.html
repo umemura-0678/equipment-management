@@ -4,6 +4,199 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MessageBOX</title>
+    <style>
+        .calendar {
+            font-family: Arial, sans-serif;
+            width: 300px;
+            margin: 20px 0;
+        }
+        .calendar-header {
+            background: #f0f0f0;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+        }
+        .calendar-nav button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .calendar-nav button:hover {
+            background: #0056b3;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #ddd;
+        }
+        #calendarDays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #ddd;
+        }
+        .calendar-day {
+            background: white;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .calendar-day:hover {
+            background: #f0f0f0;
+        }
+        .calendar-day.selected {
+            background: #007bff;
+            color: white;
+        }
+        .calendar-day.other-month {
+            color: #ccc;
+        }
+        .weekday-header {
+            background: #e9ecef;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+ 
+  
+
+    <h1>スピーカ</h1>
+    <form action="" method="post">
+        <label for="start">開始日:</label>
+        <br>
+        <input type="text" name="start" id="start" readonly>
+
+        <br>
+        <label for="end">終了日:</label>
+        <br>
+        <input type="text" name="end" id="end" readonly>
+        <br>
+        <input type="submit" value="検索">
+    </form>
+
+    <div class="calendar">
+        <div class="calendar-header">
+            <div class="calendar-nav">
+                <button onclick="previousMonth()">&lt;</button>
+                <span id="monthDisplay"></span>
+                <button onclick="nextMonth()">&gt;</button>
+            </div>
+        </div>
+        <div class="calendar-grid">
+            <div class="weekday-header">日</div>
+            <div class="weekday-header">月</div>
+            <div class="weekday-header">火</div>
+            <div class="weekday-header">水</div>
+            <div class="weekday-header">木</div>
+            <div class="weekday-header">金</div>
+            <div class="weekday-header">土</div>
+        </div>
+        <div id="calendarDays"></div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let selectedStartDate = null;
+        let selectedEndDate = null;
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('monthDisplay').textContent = 
+                `${year}年${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            let calendarHTML = '';
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const isCurrentMonth = date.getMonth() === month;
+                const isSelected = (selectedStartDate && date.toDateString() === selectedStartDate.toDateString()) ||
+                                 (selectedEndDate && date.toDateString() === selectedEndDate.toDateString());
+                
+                // 日付を文字列として渡すように変更
+                const dateKey = date.getFullYear() + '-' + 
+                               String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                               String(date.getDate()).padStart(2, '0');
+                
+                calendarHTML += `<div class="calendar-day ${isCurrentMonth ? '' : 'other-month'} ${isSelected ? 'selected' : ''}" 
+                                     onclick="selectDate('${dateKey}')">${date.getDate()}</div>`;
+            }
+            
+            document.getElementById('calendarDays').innerHTML = calendarHTML;
+        }
+
+        function selectDate(dateString) {
+            // 日付文字列からDateオブジェクトを作成（ローカルタイムゾーンで）
+            const [year, month, day] = dateString.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            
+            if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+                selectedStartDate = date;
+                selectedEndDate = null;
+                document.getElementById('start').value = dateString;
+                document.getElementById('end').value = '';
+            } else {
+                if (date < selectedStartDate) {
+                    selectedEndDate = selectedStartDate;
+                    selectedStartDate = date;
+                    document.getElementById('start').value = dateString;
+                    document.getElementById('end').value = document.getElementById('start').value;
+                } else {
+                    selectedEndDate = date;
+                    document.getElementById('end').value = dateString;
+                }
+            }
+            
+            renderCalendar();
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        // 初期表示
+        renderCalendar();
+    </script>
+
+</body>
+</html>
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MessageBOX</title>
 </head>
 <body>
 
@@ -25,4 +218,4 @@
     </form>
 
 </body>
-</html>
+</html> -->
