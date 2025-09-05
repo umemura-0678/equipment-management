@@ -1,7 +1,7 @@
 from flask import Flask, flash, redirect, render_template,request
 from flask_login import LoginManager, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from config import User
+from config import User,Message
 import time
 
 app = Flask(__name__)
@@ -81,6 +81,20 @@ def unregister():
     current_user.delete_instance()
     logout_user()
     return redirect("/")
+
+ # メッセージ投稿フォームの表示・投稿
+@app.route("/mess", methods=["GET", "POST"])
+def mess():
+    if request.method == "POST" and current_user.is_authenticated:
+        Message.create(user=current_user, content=request.form["content"])
+    
+    messages = (
+        Message.select()
+        .where(Message.reply_to.is_null(True))
+        .order_by(Message.pub_date.desc(), Message.id.desc())
+    )
+    return render_template("/select_item/message.html", messages=messages)
+
 
 # 管理画面ログイン機能
 @app.route("/admin_login", methods=["GET", "POST"])
