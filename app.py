@@ -203,37 +203,49 @@ def reserve():
         # 日付文字列から日付部分を抽出
         start_day_str = request.form["start_day"]
         end_day_str = request.form["end_day"]
+        print(start_day_str, end_day_str)
 
         # 日付文字列をdatetimeオブジェクトに変換（形式に応じて調整）
         # 例: "2024-01-15" 形式の場合
         start_date = datetime.strptime(start_day_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_day_str, "%Y-%m-%d").date()
+        print(start_date, end_date)
+
+
 
         reserve_calendar = []
-        for item in Item.select():
-            if item.item_name == "ビデオカメラ":
-                # データベースの日付も同様に処理
-                item_start = datetime.strptime(str(item.start_date), "%Y-%m-%d").date()
-                item_end = datetime.strptime(str(item.end_date), "%Y-%m-%d").date()
+        #for item in Item.select():
+        if Item.select().where(Item.item_name == "ビデオカメラ").exists():
 
-                for m in range((item_end - item_start).days + 1):
-                    reserve_calendar.append(item_start + timedelta(days=m))
-                print(reserve_calendar)
+            print("ビデオカメラがあります")
+            for item in Item.select():
+                if item.item_name == "ビデオカメラ":
+                    # データベースの日付も同様に処理
+                    item_start = datetime.strptime(str(item.start_date), "%Y-%m-%d").date()
+                    item_end = datetime.strptime(str(item.end_date), "%Y-%m-%d").date()
+                    print(item_start, item_end)
 
-                form_start = datetime.strptime(str(start_date), "%Y-%m-%d").date()
-                form_end = datetime.strptime(str(end_date), "%Y-%m-%d").date()
+                    for m in range((item_end - item_start).days + 1):
+                        reserve_calendar.append(item_start + timedelta(days=m))
+                    # 重複を削除
+                    reserve_calendar = list(dict.fromkeys(reserve_calendar))
+                    print(reserve_calendar)
 
-                flag = 0
-                for k in range((form_end - form_start).days + 1):
-                    k2 = form_start + timedelta(days=k)
-                    if k2 in reserve_calendar:
-                        # flash("その日はすでに予約されています。")
-                        flag = 1
-                        # return redirect(request.url)
-                if flag == 0:
-                    flash("予約ができました。")
+            form_start = datetime.strptime(str(start_date), "%Y-%m-%d").date()
+            form_end = datetime.strptime(str(end_date), "%Y-%m-%d").date()
 
-                    Item.create(
+            flag = 0
+            for k in range((form_end - form_start).days + 1):
+                k2 = form_start + timedelta(days=k)
+                if k2 in reserve_calendar:
+                    # flash("その日はすでに予約されています。")
+                    flag = 1
+                    # return redirect(request.url)
+
+            if flag == 0:
+                flash("予約できました。")
+
+                Item.create(
                         # item_name=request.form["item_name"],
                         item_name="ビデオカメラ",
                         start_date=request.form["start_day"],
@@ -242,9 +254,25 @@ def reserve():
                         status="予約中",
                         user=current_user,
                     )
-                else:
-                    flash("その日はすでに予約されています。")
+                return redirect(request.url)    
+            else:
+                flash("その日はすでに予約されています。")
                 return redirect(request.url)
+
+        else:
+            print("ビデオカメラがありません")
+            Item.create(
+                        # item_name=request.form["item_name"],
+                        item_name="ビデオカメラ",
+                        start_date=request.form["start_day"],
+                        end_date=request.form["end_day"],
+                        # status=request.form["status"],
+                        status="予約中",
+                        user=current_user,
+                    
+                )
+            print("ビデオカメラを登録しました")
+            return redirect(request.url)
 
         return render_template("/select.html")
     return render_template("/select_item/s1_video_camera.html")

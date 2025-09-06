@@ -28,13 +28,13 @@
     </style>
 
     {% if current_user.is_authenticated %}  {# ログインしている場合に表示 #}
-        <h2>Create</h2>
+        <h2>使用者の感想一覧</h2>
         <form action="{{ url_for('mess') }}" method="post">
             <label for="message">Message:</label>
             <br>
             <textarea name="content" id="message" placeholder="使用後の感想やご意見をお願いします"></textarea>
             <br>
-            <input type="submit" value="Create" />
+            <input type="submit" value="投稿" />
         </form>
     {% endif %}
     <br>
@@ -42,7 +42,7 @@
     <br>
 
 
-    <h2>一覧</h2>
+    
     <ul>
         {% for message in messages %}
         <div class="message">
