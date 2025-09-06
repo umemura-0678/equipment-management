@@ -101,18 +101,24 @@
 
 
     <h1>ビデオカメラ</h1>
+    {% for message in get_flashed_messages() %}
+    <p>{{ message }}</p>
+    {% endfor %}
+
+
     <form action="" method="post">
         <label for="start">開始日:</label>
         <br>
-        <input type="date" name="start" id="start" readonly>
+        <input type="date" name="start_day" id="start_day" readonly>
 
         <br>
         <label for="end">終了日:</label>
         <br>
-        <input type="date" name="end" id="end" readonly>
+        <input type="date" name="end_day" id="end_day" readonly>
         <br>
-        <input type="submit" value="検索">
+        <input type="submit" value="予約する">
     </form>
+
 
     <div class="calendar">
         <div class="calendar-header">
@@ -180,17 +186,17 @@
             if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
                 selectedStartDate = date;
                 selectedEndDate = null;
-                document.getElementById('start').value = dateString;
-                document.getElementById('end').value = '';
+                document.getElementById('start_day').value = dateString;
+                document.getElementById('end_day').value = '';
             } else {
                 if (date < selectedStartDate) {
                     selectedEndDate = selectedStartDate;
                     selectedStartDate = date;
-                    document.getElementById('start').value = dateString;
-                    document.getElementById('end').value = document.getElementById('start').value;
+                    document.getElementById('start_day').value = dateString;
+                    document.getElementById('end_day').value = document.getElementById('start_day').value;
                 } else {
                     selectedEndDate = date;
-                    document.getElementById('end').value = dateString;
+                    document.getElementById('end_day').value = dateString;
                 }
             }
 

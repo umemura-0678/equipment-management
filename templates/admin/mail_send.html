@@ -16,7 +16,9 @@
         {% for message in messages %}
         <div class="message">
             <li>
-                <img src="/static/s1.jpg" alt="ユーザー画像">
+                <img src="http://www.gravatar.com/avatar/{{ message.user.email }}?d=identicon&s=80" alt="ユーザー画像"
+                      class="avatar">
+                
                 <div class="message-info">
                     <div>{{ message.user.name }} {{ message.pub_date }}</div>
                     <div class="message-content">
