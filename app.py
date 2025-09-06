@@ -1,7 +1,7 @@
 from flask import Flask, flash, redirect, render_template, request
 from flask_login import LoginManager, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from config import User, Message, Item
+from config import User, Message, Item, MailMessage
 import time
 
 app = Flask(__name__)
@@ -141,6 +141,16 @@ def admin_login():
     return render_template("/admin/admin_login.html")
 
 
+# すべてのユーザーへメール送信
+@app.route("/mail_send")
+def mail_send():
+    if request.method == "POST":
+        MailMessage.create(user=current_user, content=request.form["content"])
+    mail_messages = MailMessage.select().order_by(MailMessage.pub_date.desc(), MailMessage.id.desc())
+    return render_template("/admin/mail_send.html", mail_messages=mail_messages)
+    # return render_template("/admin/mail_send.html")
+
+
 @app.route("/admin_menu")
 def admin_menu():
     return render_template("/admin/admin_menu.html")
@@ -164,9 +174,7 @@ def item_delete():
     return render_template("/admin/item_delete.html")
 
 
-@app.route("/mail_send")
-def mail_send():
-    return render_template("/admin/mail_send.html")
+
 
 
 @app.route("/user_menu")
