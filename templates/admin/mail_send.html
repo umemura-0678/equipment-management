@@ -1,6 +1,51 @@
 {% block content %}
+<style>
+    .message {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    .avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+
+    .message-info {
+        flex: 1;
+    }
+
+    .message-info>div:first-child {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .message-content {
+        color: #666;
+        line-height: 1.4;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    li {
+        margin: 0;
+    }
+</style>
+
 {% if current_user.is_authenticated %} {# ログインしている場合に表示 #}
-<h2>Create</h2>
+<h2>登録ユーザー全員にメールを送信します。</h2>
 <form action="{{ url_for('mail_send') }}" method="post">
     <label for="message">Message:</label>
     <br>
@@ -11,26 +56,21 @@
 {% endif %}
 
 <h2>送信したメール一覧</h2>
-    <ul>
-        {% for message in messages %}
-        <div class="message">
-            <li>
-                <img src="http://www.gravatar.com/avatar/{{ message.user.email }}?d=identicon&s=80" alt="ユーザー画像"
-                      class="avatar">
-                
-                <div class="message-info">
-                    <div>{{ message.user.name }} {{ message.pub_date }}</div>
-                    <div class="message-content">
-                        {{ message.content }}
-                    </div>
+<ul>
+    {% for message in mail_messages %}
+    <div class="message">
+        <li>
+            <img src="http://www.gravatar.com/avatar/{{ message.user.email }}?d=identicon&s=80" alt="ユーザー画像" class="avatar">
+
+            <div class="message-info">
+                <div>{{ message.user.name }} {{ message.pub_date }}</div>
+                <div class="message-content">
+                    {{ message.content }}
                 </div>
-            </li>
-        </div>
-        {% endfor %}
-    </ul>
+            </div>
+        </li>
+    </div>
+    {% endfor %}
+</ul>
 
 {% endblock %}
-
-
-
-

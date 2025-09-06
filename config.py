@@ -42,6 +42,7 @@ class Message(Model):
         database = db
         table_name = "messages"
 
+
 class MailMessage(Model):
     id = IntegerField(primary_key=True)
     user = ForeignKeyField(User, backref="messages", on_delete="CASCADE")  # 参照先が削除された場合は削除する
@@ -54,6 +55,7 @@ class MailMessage(Model):
     class Meta:
         database = db
         table_name = "mail_messages"
+
 
 db.create_tables([User, Message, Item, MailMessage])
 db.pragma("foreign_keys", 1, permanent=True)  # on_deleteを動作させるオプション設定を追加
