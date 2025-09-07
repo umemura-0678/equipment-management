@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "secret"
@@ -107,21 +111,44 @@ def mail_send():
         content = request.form["content"]
         subject = "お知らせ"  # メールの件名
 
-        # メッセージをデータベースに保存
-        MailMessage.create(user=current_user, content=content)
+        # 入力データの検証とサニタイゼーション
+        if not content or not content.strip():
+            flash("メッセージ内容を入力してください。")
+            return redirect(request.url)
+
+        # 文字数制限チェック
+        if len(content) > 1000:
+            flash("メッセージは1000文字以内で入力してください。")
+            return redirect(request.url)
+
+        # 危険な文字の除去（基本的なサニタイゼーション）
+        import re
+
+        # HTMLタグの除去
+        clean_content = re.sub(r"<[^>]+>", "", content)
+        # 改行文字の正規化
+        clean_content = clean_content.replace("\r\n", "\n").replace("\r", "\n")
+        # 連続する改行を制限
+        clean_content = re.sub(r"\n{3,}", "\n\n", clean_content)
+
+        # メッセージをデータベースに保存（クリーンな内容）
+        MailMessage.create(user=current_user, content=clean_content)
 
         # 全ユーザーのemailリストを取得
         user_email_list = get_user_email_list_efficient()
 
         # 各ユーザーにメール送信
         if user_email_list:
-            success = send_email_to_users(user_email_list, subject, content)
+            success = send_email_to_users(user_email_list, subject, clean_content)
             if success:
                 flash("メール送信が完了しました。")
+                print("メール送信が完了しました。")
             else:
                 flash("メール送信に失敗しました。")
+                print("メール送信に失敗しました。")
         else:
             flash("送信先のユーザーが見つかりません。")
+            print("送信先のユーザーが見つかりません。")
 
     mail_messages = (
         MailMessage.select()
@@ -159,8 +186,21 @@ def send_email_to_users(email_list, subject, content):
     # SMTPサーバーの設定（Gmailの場合）
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    sender_email = "yume067829@gmail.com"  # 送信者のメールアドレス
-    sender_password = "your-app-password"  # アプリパスワード
+    sender_email = os.getenv("SENDER_EMAIL")  # 送信者のメールアドレス
+    sender_password = os.getenv("SENDER_PASSWORD")  # 送信者のパスワード
+
+    # # 環境変数のチェック（デフォルト値を設定）
+    # if not sender_email:
+    #     sender_email = "yume067829@gmail.com"  # デフォルトのメールアドレス
+    # if not sender_password:
+    #     sender_password = "your-app-password"  # デフォルトのパスワード（実際の値に変更が必要）
+
+    # # デフォルト値が設定されている場合の警告
+    # if sender_password == "your-app-password":
+    #     print(
+    #         "警告: デフォルトのパスワードが使用されています。.envファイルでSENDER_PASSWORDを設定してください。"
+    #     )
+    #     return False
 
     try:
         # SMTPサーバーに接続
@@ -174,10 +214,21 @@ def send_email_to_users(email_list, subject, content):
             msg = MIMEMultipart()
             msg["From"] = sender_email
             msg["To"] = recipient_email
+
+            # 件名のエンコード処理（日本語対応）
             msg["Subject"] = subject
 
-            # メール本文の追加
-            msg.attach(MIMEText(content, "plain", "utf-8"))
+            # メール本文のエンコード処理
+            # 1. HTMLエスケープ処理
+            import html
+
+            safe_content = html.escape(content)
+
+            # 2. 改行文字の正規化
+            normalized_content = content.replace("\r\n", "\n").replace("\r", "\n")
+
+            # 3. UTF-8エンコードでメール本文を追加
+            msg.attach(MIMEText(normalized_content, "plain", "utf-8"))
 
             # メール送信
             server.send_message(msg)
@@ -186,14 +237,35 @@ def send_email_to_users(email_list, subject, content):
         server.quit()
         return True
 
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"SMTP認証エラー: {e}")
+        print("Gmailのアプリパスワードが正しく設定されているか確認してください。")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"SMTPエラー: {e}")
+        return False
     except Exception as e:
         print(f"メール送信エラー: {e}")
         return False
 
 
-# 予約処理
+# 予約処理(ビデオカメラ)
 @app.route("/select/s1_video_camera", methods=["GET", "POST"])
 def reserve():
+    # 予約済み日付のリストを初期化（GETとPOST両方で使用）
+    reserve_calendar = []
+
+    # 既存の予約データを取得
+    if Item.select().where(Item.item_name == "ビデオカメラ").exists():
+        for item in Item.select():
+            if item.item_name == "ビデオカメラ":
+                item_start = datetime.strptime(str(item.start_date), "%Y-%m-%d").date()
+                item_end = datetime.strptime(str(item.end_date), "%Y-%m-%d").date()
+                for m in range((item_end - item_start).days + 1):
+                    reserve_calendar.append(item_start + timedelta(days=m))
+        # 重複を削除
+        reserve_calendar = list(dict.fromkeys(reserve_calendar))
+
     if request.method == "POST":
         # データの検証
         if not request.form["start_day"] or not request.form["end_day"]:
@@ -211,71 +283,36 @@ def reserve():
         end_date = datetime.strptime(end_day_str, "%Y-%m-%d").date()
         print(start_date, end_date)
 
+        form_start = datetime.strptime(str(start_date), "%Y-%m-%d").date()
+        form_end = datetime.strptime(str(end_date), "%Y-%m-%d").date()
 
+        flag = 0
+        for k in range((form_end - form_start).days + 1):
+            k2 = form_start + timedelta(days=k)
+            if k2 in reserve_calendar:
+                # flash("その日はすでに予約されています。")
+                flag = 1
+                # return redirect(request.url)
 
-        reserve_calendar = []
-        #for item in Item.select():
-        if Item.select().where(Item.item_name == "ビデオカメラ").exists():
+        if flag == 0:
+            flash("予約できました。")
 
-            print("ビデオカメラがあります")
-            for item in Item.select():
-                if item.item_name == "ビデオカメラ":
-                    # データベースの日付も同様に処理
-                    item_start = datetime.strptime(str(item.start_date), "%Y-%m-%d").date()
-                    item_end = datetime.strptime(str(item.end_date), "%Y-%m-%d").date()
-                    print(item_start, item_end)
-
-                    for m in range((item_end - item_start).days + 1):
-                        reserve_calendar.append(item_start + timedelta(days=m))
-                    # 重複を削除
-                    reserve_calendar = list(dict.fromkeys(reserve_calendar))
-                    print(reserve_calendar)
-
-            form_start = datetime.strptime(str(start_date), "%Y-%m-%d").date()
-            form_end = datetime.strptime(str(end_date), "%Y-%m-%d").date()
-
-            flag = 0
-            for k in range((form_end - form_start).days + 1):
-                k2 = form_start + timedelta(days=k)
-                if k2 in reserve_calendar:
-                    # flash("その日はすでに予約されています。")
-                    flag = 1
-                    # return redirect(request.url)
-
-            if flag == 0:
-                flash("予約できました。")
-
-                Item.create(
-                        # item_name=request.form["item_name"],
-                        item_name="ビデオカメラ",
-                        start_date=request.form["start_day"],
-                        end_date=request.form["end_day"],
-                        # status=request.form["status"],
-                        status="予約中",
-                        user=current_user,
-                    )
-                return redirect(request.url)    
-            else:
-                flash("その日はすでに予約されています。")
-                return redirect(request.url)
-
-        else:
-            print("ビデオカメラがありません")
             Item.create(
-                        # item_name=request.form["item_name"],
-                        item_name="ビデオカメラ",
-                        start_date=request.form["start_day"],
-                        end_date=request.form["end_day"],
-                        # status=request.form["status"],
-                        status="予約中",
-                        user=current_user,
-                    
-                )
-            print("ビデオカメラを登録しました")
+                # item_name=request.form["item_name"],
+                item_name="ビデオカメラ",
+                start_date=request.form["start_day"],
+                end_date=request.form["end_day"],
+                # status=request.form["status"],
+                status="予約中",
+                user=current_user,
+            )
+            return redirect(request.url)
+        else:
+            flash("その日はすでに予約されています。")
             return redirect(request.url)
 
         return render_template("/select.html")
-    return render_template("/select_item/s1_video_camera.html")
+    return render_template("/select_item/s1_video_camera.html", reserve_cal=reserve_calendar)
 
 
 # 管理画面ログイン機能
@@ -343,13 +380,76 @@ def select():
     return render_template("select.html")
 
 
-@app.route("/select/s1_video_camera")
-def video_camera():
-    return render_template("/select_item/s1_video_camera.html")
+# @app.route("/select/s1_video_camera")
+# def video_camera():
+#     return render_template("/select_item/s1_video_camera.html")
 
 
-@app.route("/select/s2_speaker")
-def speaker():
+# 予約処理(スピーカー)
+@app.route("/select/s2_speaker", methods=["GET", "POST"])
+def reserve_speaker():
+    # 予約済み日付のリストを初期化（GETとPOST両方で使用）
+    reserve_calendar = []
+
+    # 既存の予約データを取得
+    if Item.select().where(Item.item_name == "スピーカー").exists():
+        for item in Item.select():
+            if item.item_name == "スピーカー":
+                item_start = datetime.strptime(str(item.start_date), "%Y-%m-%d").date()
+                item_end = datetime.strptime(str(item.end_date), "%Y-%m-%d").date()
+                for m in range((item_end - item_start).days + 1):
+                    reserve_calendar.append(item_start + timedelta(days=m))
+        # 重複を削除
+        reserve_calendar = list(dict.fromkeys(reserve_calendar))
+
+    if request.method == "POST":
+        # データの検証
+        if not request.form["start_day"] or not request.form["end_day"]:
+            flash("未入力の項目があります。")
+            return redirect(request.url)
+
+        # 日付文字列から日付部分を抽出
+        start_day_str = request.form["start_day"]
+        end_day_str = request.form["end_day"]
+        print(start_day_str, end_day_str)
+
+        # 日付文字列をdatetimeオブジェクトに変換（形式に応じて調整）
+        # 例: "2024-01-15" 形式の場合
+        start_date = datetime.strptime(start_day_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_day_str, "%Y-%m-%d").date()
+        print(start_date, end_date)
+
+        form_start = datetime.strptime(str(start_date), "%Y-%m-%d").date()
+        form_end = datetime.strptime(str(end_date), "%Y-%m-%d").date()
+
+        flag = 0
+        for k in range((form_end - form_start).days + 1):
+            k2 = form_start + timedelta(days=k)
+            if k2 in reserve_calendar:
+                # flash("その日はすでに予約されています。")
+                flag = 1
+                # return redirect(request.url)
+
+        if flag == 0:
+            flash("予約できました。")
+
+            Item.create(
+                # item_name=request.form["item_name"],
+                item_name="スピーカー",
+                start_date=request.form["start_day"],
+                end_date=request.form["end_day"],
+                # status=request.form["status"],
+                status="予約中",
+                user=current_user,
+            )
+            return redirect(request.url)
+        else:
+            flash("その日はすでに予約されています。")
+            return redirect(request.url)
+
+        return render_template("/select.html")
+    return render_template("/select_item/s2_speaker.html", reserve_cal=reserve_calendar)
+
     return render_template("/select_item/s2_speaker.html")
 
 

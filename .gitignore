@@ -1,5 +1,5 @@
-+ .env
-+ .venv
-+ db.sqlite
-+ __pycache__/
+.env
+.venv
+db.sqlite
+__pycache__/
 

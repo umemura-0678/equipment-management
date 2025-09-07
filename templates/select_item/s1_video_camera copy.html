@@ -92,26 +92,6 @@
             text-align: center;
             cursor: pointer;
         }
-
-        .calendar-day.reserved {
-            background: #ff6b6b;
-            color: white;
-            cursor: not-allowed;
-        }
-
-        .calendar-day.reserved:hover {
-            background: #ff5252;
-        }
-
-        .calendar-day.past {
-            background: #e0e0e0;
-            color: #999;
-            cursor: not-allowed;
-        }
-
-        .calendar-day.past:hover {
-            background: #d0d0d0;
-        }
     </style>
 </head>
 
@@ -139,8 +119,6 @@
         <input type="submit" value="予約する">
     </form>
 
-   
-
 
     <div class="calendar">
         <div class="calendar-header">
@@ -166,17 +144,6 @@
         let currentDate = new Date();
         let selectedStartDate = null;
         let selectedEndDate = null;
-
-        // 予約済み日付のリスト（Pythonから渡される）
-        const reservedDates = {{ reserve_cal | tojson | safe }};
-
-        // 日付オブジェクトのリストを文字列のリストに変換
-        const reservedDateStrings = reservedDates.map(dateStr => {
-            const date = new Date(dateStr);
-            return date.getFullYear() + '-' +
-                String(date.getMonth() + 1).padStart(2, '0') + '-' +
-                String(date.getDate()).padStart(2, '0');
-        });
 
         function renderCalendar() {
             const year = currentDate.getFullYear();
@@ -204,16 +171,8 @@
                     String(date.getMonth() + 1).padStart(2, '0') + '-' +
                     String(date.getDate()).padStart(2, '0');
 
-                // 予約済み日付かどうかをチェック
-                const isReserved = reservedDateStrings.includes(dateKey);
-
-                // 過去の日付かどうかをチェック
-                const today = new Date();
-                today.setHours(0, 0, 0, 0); // 時間を00:00:00に設定
-                const isPast = date < today;
-
-                calendarHTML += `<div class="calendar-day ${isCurrentMonth ? '' : 'other-month'} ${isSelected ? 'selected' : ''} ${isReserved ? 'reserved' : ''} ${isPast ? 'past' : ''}" 
-                                     onclick="${(isReserved || isPast) ? '' : `selectDate('${dateKey}')`}">${date.getDate()}</div>`;
+                calendarHTML += `<div class="calendar-day ${isCurrentMonth ? '' : 'other-month'} ${isSelected ? 'selected' : ''}" 
+                                     onclick="selectDate('${dateKey}')">${date.getDate()}</div>`;
             }
 
             document.getElementById('calendarDays').innerHTML = calendarHTML;
@@ -259,8 +218,6 @@
         // 初期表示
         renderCalendar();
     </script>
-
-    <a href="/select">貸出品一覧に戻る</a>
 
 </body>
 
